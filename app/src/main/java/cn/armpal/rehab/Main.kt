@@ -1,7 +1,7 @@
 package cn.armpal.rehab
 
+import androidx.compose.ui.unit.dp
 import cn.armpal.rehab.content.HomeStage
-import cn.armpal.rehab.tracking.rememberHandTracking
 import cn.armpal.rehab.windows.CorrectWindow
 import cn.armpal.rehab.windows.ReportWindow
 import cn.armpal.rehab.windows.TrainingWindow
@@ -11,13 +11,12 @@ import com.pico.spatial.ui.foundation.dsl.Form
 import com.pico.spatial.ui.foundation.dsl.SpatialAppScope
 import com.pico.spatial.ui.foundation.dsl.WindowContainer
 import com.pico.spatial.ui.foundation.dsl.WindowContainerSize
-import com.pico.spatial.ui.platform.LengthUnit
 
 /**
- * 臂伴三窗布局(Spike A/B):
- * - 训练主窗(中央):持有手部追踪 Provider(全局仅此一份)
- * - 纠正侧窗 / 报告窗:订阅 HandTrackingStore
- * 窗口尺寸单位为米;W4 打磨时按视线高度与摆放重新调整。
+ * 臂伴三窗布局(对齐官方 WelcomeSpace 多窗范式):
+ * - Stage(Full Space):承载手部追踪 Provider 与 3D 场景(追踪能力仅 Stage 可用)
+ * - 训练主窗 / 纠正侧窗 / 报告窗:三个 WindowContainer,经 HandTrackingStore 订阅状态
+ * 尺寸单位为 dp(6.2 DSL 约定);W4 打磨时按视线与摆放再调。
  */
 fun mainApp(scope: SpatialAppScope) =
     with(scope) {
@@ -28,21 +27,19 @@ fun mainApp(scope: SpatialAppScope) =
         }
 
         WindowContainer(
-            "training",
-            Form.Planar,
-            WindowContainerSize(1.10f, 0.85f, 0.04f, LengthUnit.Meters),
+            id = "training",
+            form = Form.Planar,
+            defaultSize = WindowContainerSize(width = 1100.dp, height = 800.dp, depth = 40.dp),
         ) {
             PicoTheme {
-                // Provider 生命周期绑定在主窗组合内(DisposableEffect start/stop 配对)
-                rememberHandTracking()
                 TrainingWindow()
             }
         }
 
         WindowContainer(
-            "correct",
-            Form.Planar,
-            WindowContainerSize(0.62f, 0.72f, 0.04f, LengthUnit.Meters),
+            id = "correct",
+            form = Form.Planar,
+            defaultSize = WindowContainerSize(width = 620.dp, height = 720.dp, depth = 40.dp),
         ) {
             PicoTheme {
                 CorrectWindow()
@@ -50,9 +47,9 @@ fun mainApp(scope: SpatialAppScope) =
         }
 
         WindowContainer(
-            "report",
-            Form.Planar,
-            WindowContainerSize(0.55f, 0.72f, 0.04f, LengthUnit.Meters),
+            id = "report",
+            form = Form.Planar,
+            defaultSize = WindowContainerSize(width = 550.dp, height = 720.dp, depth = 40.dp),
         ) {
             PicoTheme {
                 ReportWindow()

@@ -32,3 +32,12 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# PICO CLI / local artifacts
+.pico-cli/
+screenshot-*.png
+node_modules/
+
+# ADB keys must never be committed
+adbkey
+adbkey.pub

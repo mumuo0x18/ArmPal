@@ -98,8 +98,11 @@ pico-cli capture screenshot    # 截图验证
 | 2026-11-14 | 构建 | stage 模板 + 三窗骨架 `assembleDebug` 通过(AGP 8.13.2 / Kotlin 2.1.20 / Spatial SDK BOM 6.2.8);Gradle 走腾讯镜像 + 官方 sha256 校验 |
 | 2026-11-14 | 算法单测 | analysis 包 20 个 JVM 单测全绿(RepCounter 状态机 / 角度 / DTW / 校准估计) |
 | 2026-11-14 | API 实测 | 6.2.8 API:`HandTrackingProvider`(DataProvider 流)、`SupportState` 含 WITHOUT_PERMISSION/NOT_IN_FULL_SPACE、`WindowContainer(name, Form, WindowContainerSize(w,h,d,LengthUnit))`、`DataListener.onProvideData` |
-| (待) | 三窗渲染 | 模拟器镜像下载中 |
-| (待) | 手部追踪 spike | |
+| 2026-11-14 | **多窗 Spike A** | **三窗(训练/纠正/报告)在模拟器 Full Space 渲染成功**。关键坑:**声明 ≠ 打开** —— `WindowContainer(id=...)` 只注册声明,必须 `LocalSpatialNavigator.openWindowContainer(id)` 显式打开(参照官方 WelcomeSpace);尺寸用 Dp 构造 |
+| 2026-11-14 | **手部追踪 Spike B** | 权限链路端到端通:manifest 声明 → `SupportState.WITHOUT_PERMISSION` → 系统弹窗 → `pm grant` → `start=SUCCESS support=SUPPORTED`,腕关节数据流入(模拟器无真实手,坐标 0,0,0 属"有限手势"预期)。自动化授权用 `adb shell pm grant` |
+| 2026-11-14 | 模拟器启动 | pico-cli `emulator start` 在本机死锁,绕过方案:直接跑 bundle 内标准 emulator 二进制;PICO 魔改的 searchPaths 按 `sdk_root/<sysdir 项>` 独立拼接,需 `sdk_root/6.2` 符号链接;内核用 `-kernel` 显式指定 |
+| 2026-11-14 | 稳定性坑 | 对前台 Full Space 应用 `adb install -r` 会挂死模拟器(QEMU CPU 线程 hang)——重装前先 `am force-stop` |
+| (待) | 坐标转换 Spike C | 随 W2 CoordinateMapper 一并验证(模拟器腕坐标恒 0,无法单独验证) |
 
 ## Roadmap
 

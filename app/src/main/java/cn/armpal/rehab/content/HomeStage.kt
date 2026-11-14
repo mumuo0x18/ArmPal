@@ -1,29 +1,30 @@
 package cn.armpal.rehab.content
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.pico.spatial.core.ecs.Entity
-import com.pico.spatial.core.ecs.TransformComponent
-import com.pico.spatial.core.math.EulerAngles
-import com.pico.spatial.core.math.Vector3
-import cn.armpal.rehab.R
-import com.pico.spatial.ui.design.PicoTheme
-import com.pico.spatial.ui.design.Text
-import com.pico.spatial.ui.foundation.content.SpatialView
-import com.pico.spatial.ui.foundation.material.backgroundMaterial
-import com.pico.spatial.ui.platform.Material
+import androidx.compose.runtime.LaunchedEffect
+import cn.armpal.rehab.tracking.rememberHandTracking
+import com.pico.spatial.ui.platform.containers.LocalSpatialNavigator
 
+/**
+ * Stage(Full Space)3D 场景内容。
+ * - 手部追踪 Provider 在 Stage 内容中启动(追踪能力仅 Full Space 可用),
+ *   快照写入 HandTrackingStore 供三个窗口订阅
+ * - 三个 WindowContainer 在 mainApp 中声明,这里显式 open
+ *   (6.2 行为:声明 ≠ 打开,参照官方 WelcomeSpace)
+ * W2 在此挂示范者实体。
+ */
 @Composable
 fun HomeStage() {
-    // Add your own Spatial content here
+    val navigator = LocalSpatialNavigator.current
 
+    // Provider 生命周期绑定 Stage 组合(DisposableEffect start/stop 配对)
+    rememberHandTracking()
+
+    LaunchedEffect(Unit) {
+        navigator.openWindowContainer("training")
+        navigator.openWindowContainer("correct")
+        navigator.openWindowContainer("report")
+    }
+
+    // W2:示范者实体(SpatialView / ECS Entity)在此添加
 }
