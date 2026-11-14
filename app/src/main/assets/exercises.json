@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "exercises": [
     {
       "id": "seated_arm_raise",
@@ -18,6 +18,78 @@
         [0.55, 0.12, 0.00]
       ],
       "description": "坐直,右臂从身体侧方缓慢抬起至约80度,顶点保持半秒后放下。双侧交替时以健侧为参考。"
+    },
+    {
+      "id": "seated_front_raise",
+      "name": "坐姿前平举",
+      "targetJoint": "WRIST_R",
+      "targetElevationDeg": 80.0,
+      "reps": 10,
+      "holdMs": 500,
+      "sets": 2,
+      "restSec": 30,
+      "templateTrajectory": [
+        [0.00, -0.30, 0.10],
+        [0.00, -0.10, 0.28],
+        [0.00, 0.05, 0.40],
+        [0.00, 0.15, 0.50],
+        [0.00, 0.20, 0.55]
+      ],
+      "description": "坐直,右臂从身体前方缓慢抬起至约与肩同高,顶点保持半秒后放下。"
+    },
+    {
+      "id": "seated_arm_raise_left",
+      "name": "左臂抬臂",
+      "targetJoint": "WRIST_L",
+      "targetElevationDeg": 80.0,
+      "reps": 12,
+      "holdMs": 500,
+      "sets": 2,
+      "restSec": 30,
+      "templateTrajectory": [
+        [-0.00, -0.30, 0.00],
+        [-0.15, -0.20, 0.00],
+        [-0.35, 0.00, 0.00],
+        [-0.50, 0.10, 0.00],
+        [-0.55, 0.12, 0.00]
+      ],
+      "description": "坐直,左臂从身体侧方缓慢抬起至约80度,顶点保持半秒后放下。"
+    },
+    {
+      "id": "neck_rotation",
+      "name": "颈部左右转",
+      "targetJoint": "HEAD_YAW",
+      "targetElevationDeg": 40.0,
+      "reps": 8,
+      "holdMs": 400,
+      "sets": 2,
+      "restSec": 20,
+      "templateTrajectory": [
+        [0.00, 0.00, 0.30],
+        [0.12, 0.00, 0.28],
+        [0.22, 0.00, 0.20],
+        [0.28, 0.00, 0.10],
+        [0.30, 0.00, 0.00]
+      ],
+      "description": "坐直,肩膀放松,头部缓慢向一侧转到约40度,停一拍后回正,再转向另一侧。动作要慢。"
+    },
+    {
+      "id": "neck_nod",
+      "name": "颈部点头仰头",
+      "targetJoint": "HEAD_PITCH",
+      "targetElevationDeg": 30.0,
+      "reps": 8,
+      "holdMs": 400,
+      "sets": 2,
+      "restSec": 20,
+      "templateTrajectory": [
+        [0.00, 0.00, 0.30],
+        [0.00, 0.08, 0.28],
+        [0.00, 0.16, 0.22],
+        [0.00, 0.22, 0.14],
+        [0.00, 0.26, 0.08]
+      ],
+      "description": "坐直,缓慢低头再缓慢仰头,到约30度时停一拍。幅度以舒适为度,不要用力后仰。"
     }
   ]
 }

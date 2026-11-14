@@ -53,12 +53,17 @@ class DemoTrackingSource(
             DemoScript.GOOD, DemoScript.INSUFFICIENT -> elevation
             DemoScript.ASYMMETRIC -> elevation * 0.5f
         }
-        val body = estimator.estimate(headWorld, 0f)
+        // 头部缓慢摆动:颈部动作(HEAD_YAW/HEAD_PITCH)的演示源;对臂部动作,
+        // yaw 旋转不改变"相对竖直轴的抬举角",肩部偏移随 yaw 旋转后仍然自洽
+        val yawRad = kotlin.math.sin(t * (2f * PI.toFloat() / HEAD_YAW_PERIOD_SEC)) * HEAD_YAW_AMP_RAD
+        val pitchRad = kotlin.math.sin(t * (2f * PI.toFloat() / HEAD_PITCH_PERIOD_SEC)) * HEAD_PITCH_AMP_RAD
+        val body = estimator.estimate(headWorld, yawRad)
         return TrackingFrame(
             timestampMs = timestampMs,
             status = TrackingStatus.DEMO,
             headWorld = headWorld,
-            headYawRad = 0f,
+            headYawRad = yawRad,
+            headPitchRad = pitchRad,
             wristRWorld = wristFor(body.shoulderR, elevation, rightSide = true),
             wristLWorld = wristFor(body.shoulderL, leftElevation, rightSide = false),
         )
@@ -102,5 +107,11 @@ class DemoTrackingSource(
         private const val HOLD_SEC = 1.0f
         private const val LOWER_SEC = 1.5f
         private const val REST_DEG = 3f
+
+        // 头部演示摆动参数(±幅度,周期秒)
+        private const val HEAD_YAW_AMP_RAD = 0.75f   // ≈43°
+        private const val HEAD_YAW_PERIOD_SEC = 8f
+        private const val HEAD_PITCH_AMP_RAD = 0.5f  // ≈29°
+        private const val HEAD_PITCH_PERIOD_SEC = 6f
     }
 }

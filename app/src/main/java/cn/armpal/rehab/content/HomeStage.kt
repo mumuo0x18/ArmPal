@@ -62,12 +62,25 @@ fun HomeStage() {
     var exercise by remember { mutableStateOf<ExerciseTemplate?>(null) }
     LaunchedEffect(Unit) {
         val all = ExerciseRepository.load(context)
+        ExerciseSelection.all = all
         val savedId = SettingsStore.selectedExerciseId(context).first()
-        exercise = all.firstOrNull { it.id == savedId } ?: all.firstOrNull()
+        ExerciseSelection.currentId = savedId?.takeIf { id -> all.any { it.id == id } }
+        exercise = ExerciseSelection.current
     }
 
     // 追踪数据源(含权限巡检/授权后重启/无真机自动演示兜底)
     val source = rememberTrackingSource()
+
+    // 用户切换动作:重新绑定会话(rebind 幂等)并持久化选择
+    LaunchedEffect(ExerciseSelection.currentId, DisclaimerStore.accepted) {
+        val template = ExerciseSelection.current ?: return@LaunchedEffect
+        if (DisclaimerStore.accepted != true) return@LaunchedEffect
+        if (exercise?.id != template.id) {
+            exercise = template
+            SettingsStore.setSelectedExerciseId(context, template.id)
+            TrainingSessionController.bind(source, template)
+        }
+    }
 
     // 绑定训练会话:免责声明确认后才开始(避免确认前演示源已计数/落库)
     LaunchedEffect(source, exercise, DisclaimerStore.accepted) {

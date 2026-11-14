@@ -1,6 +1,7 @@
 package cn.armpal.rehab.windows
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,8 +20,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cn.armpal.rehab.analysis.HeadMetrics
+import cn.armpal.rehab.content.ExerciseSelection
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.session.TrainingSessionController
+import com.pico.spatial.ui.design.Button
+import com.pico.spatial.ui.design.ButtonDefaults
 import com.pico.spatial.ui.design.Text
 import kotlinx.coroutines.launch
 
@@ -47,14 +52,41 @@ fun TrainingWindow() {
 
     val state by TrainingSessionController.state.collectAsState()
     RehabPanel(title = "臂伴 · 今日训练") {
+        // 动作选择 chips(两列一排;选中项高亮)
+        if (ExerciseSelection.all.size > 1) {
+            ExerciseSelection.all.chunked(2).forEach { rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowItems.forEach { ex ->
+                        val selected = state.exercise?.id == ex.id
+                        Button(
+                            onClick = { ExerciseSelection.currentId = ex.id },
+                            colors = ButtonDefaults.buttonColors().copy(
+                                containerColor = if (selected) AccentBlue else TrackBackground,
+                                contentColor = if (selected) TextPrimary else TextSecondary,
+                            ),
+                        ) {
+                            Text(
+                                text = if (selected) "● " + ex.name else ex.name,
+                                fontSize = 17.sp,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+
         Text(
             text = state.exercise?.name ?: "坐姿抬臂",
             fontSize = 34.sp,
             color = TextPrimary,
         )
         Spacer(Modifier.height(6.dp))
+        val neck = state.exercise?.targetJoint?.let { HeadMetrics.isNeckExercise(it) } == true
         Text(
-            text = "目标:抬到 ${state.targetDeg.toInt()}°,保持 0.5 秒",
+            text = if (neck) "目标:转到 ${state.targetDeg.toInt()}°,停 0.4 秒"
+            else "目标:抬到 ${state.targetDeg.toInt()}°,保持 0.5 秒",
             fontSize = 20.sp,
             color = TextSecondary,
         )

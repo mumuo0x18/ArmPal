@@ -39,8 +39,10 @@ data class TrackingFrame(
     val status: TrackingStatus,
     /** 头显在世界系中的位置(米)。 */
     val headWorld: Vec3? = null,
-    /** 头显朝向 yaw(弧度),用于旋转肩部偏移。 */
+    /** 头显朝向 yaw(弧度),用于旋转肩部偏移;颈部左右转训练用。 */
     val headYawRad: Float = 0f,
+    /** 头显俯仰 pitch(弧度);颈部点头/仰头训练用。 */
+    val headPitchRad: Float = 0f,
     /** 右手腕世界坐标(米),null = 当前帧无有效数据。 */
     val wristRWorld: Vec3? = null,
     /** 左手腕世界坐标(米)。 */
@@ -48,6 +50,9 @@ data class TrackingFrame(
 ) {
     /** 是否至少有一只手的数据。 */
     val hasHands: Boolean get() = wristRWorld != null || wristLWorld != null
+
+    /** 是否有头部姿态数据(颈部训练的有效信号)。 */
+    val hasHead: Boolean get() = headWorld != null
 }
 
 /**

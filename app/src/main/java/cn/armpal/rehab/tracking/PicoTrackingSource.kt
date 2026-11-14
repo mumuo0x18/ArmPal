@@ -55,13 +55,16 @@ class PicoTrackingSource(
 
         val pose = hmdData?.hmdPose
         val head = pose?.position?.toVec3()?.takeIf { it.isSane() }
-        val yaw = runCatching { pose?.rotation?.toEulerAngles()?.yaw }.getOrNull() ?: 0f
+        val euler = runCatching { pose?.rotation?.toEulerAngles() }.getOrNull()
+        val yaw = euler?.yaw ?: 0f
+        val pitch = euler?.pitch ?: 0f
 
         return TrackingFrame(
             timestampMs = timestampMs,
             status = mapStatus(),
             headWorld = head,
             headYawRad = yaw,
+            headPitchRad = pitch,
             wristRWorld = handData?.right?.wristWorld(),
             wristLWorld = handData?.left?.wristWorld(),
         )

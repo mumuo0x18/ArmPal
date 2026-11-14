@@ -5,6 +5,7 @@ import android.util.Log
 import cn.armpal.rehab.analysis.AngleMetrics
 import cn.armpal.rehab.analysis.BodyFrameEstimator
 import cn.armpal.rehab.analysis.ExerciseTemplate
+import cn.armpal.rehab.analysis.HeadMetrics
 import cn.armpal.rehab.analysis.RepCounter
 import cn.armpal.rehab.analysis.RepEvent
 import cn.armpal.rehab.analysis.RepQualityScorer
@@ -146,11 +147,14 @@ object TrainingSessionController {
 
         val now = SystemClock.elapsedRealtime()
         val frame = src.currentFrame(now)
-        if (frame.hasHands) lastHandMs = now
+        val isNeck = HeadMetrics.isNeckExercise(ex.targetJoint)
+        // 有效信号:臂部动作看双手,颈部动作看头显姿态
+        val hasSignal = frame.hasHands || (isNeck && frame.hasHead)
+        if (hasSignal) lastHandMs = now
 
         val effectiveStatus = when {
             frame.status != TrackingStatus.ACTIVE && frame.status != TrackingStatus.DEMO -> frame.status
-            frame.hasHands -> frame.status
+            hasSignal -> frame.status
             lastHandMs == 0L -> TrackingStatus.WAITING
             now - lastHandMs > LOST_GRACE_MS -> TrackingStatus.LOST
             else -> frame.status
@@ -159,13 +163,23 @@ object TrainingSessionController {
         var elevationR: Float? = null
         var elevationL: Float? = null
         val head = frame.headWorld
-        if (head != null && frame.hasHands) {
+        if (!isNeck && head != null && frame.hasHands) {
             val body = estimator.estimate(head, frame.headYawRad)
             elevationR = frame.wristRWorld?.let { AngleMetrics.elevationDeg(it, body.shoulderR) }
             elevationL = frame.wristLWorld?.let { AngleMetrics.elevationDeg(it, body.shoulderL) }
         }
 
-        val targetSide = if (ex.targetJoint.endsWith("_L", ignoreCase = true)) elevationL else elevationR
+        val targetSide: Float? = when {
+            ex.targetJoint.equals("HEAD_YAW", ignoreCase = true) ->
+                HeadMetrics.yawSwingDeg(frame.headYawRad).takeIf { frame.hasHead }
+
+            ex.targetJoint.equals("HEAD_PITCH", ignoreCase = true) ->
+                HeadMetrics.pitchSwingDeg(frame.headPitchRad).takeIf { frame.hasHead }
+
+            ex.targetJoint.endsWith("_L", ignoreCase = true) -> elevationL
+
+            else -> elevationR
+        }
 
         // 对称性采样(双臂都有数据时)
         if (elevationR != null && elevationL != null) {
@@ -236,8 +250,8 @@ object TrainingSessionController {
             return
         }
         if (targetSide != null && effectiveStatus != TrackingStatus.LOST) {
-            if (counter.phase != cn.armpal.rehab.analysis.RepPhase.IDLE) {
-                // 采集本次重复的腕点轨迹(供 DTW 质量分)
+            if (!isNeck && counter.phase != cn.armpal.rehab.analysis.RepPhase.IDLE) {
+                // 采集本次重复的腕点轨迹(供 DTW 质量分;颈部动作无腕轨迹,不评分)
                 val wrist = frame.wristRWorld ?: frame.wristLWorld
                 if (wrist != null) {
                     repTrajectory.add(wrist)
