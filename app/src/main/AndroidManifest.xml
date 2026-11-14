@@ -7,8 +7,7 @@
 
     <application
         android:name=".platform.SpatialApplication"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_spatial_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_spatial_launcher"
@@ -30,7 +29,7 @@
             <!-- The unique name/id of the Stage -->
             <meta-data
                 android:name="pico.spatial.stage.id"
-                android:value="YourStage" />
+                android:value="ArmPalStage" />
 
             <!-- Stage style at launch
                  "0": StageStyle.Automatic, a system default setting, set to Mixed currently (default)
@@ -43,21 +42,6 @@
             <meta-data
                 android:name="pico.spatial.stage.style"
                 android:value="1" />
-
-            <!-- The immersion of a Progressive Stage at launch, only works when stage style is Progressive, range [0, 100], default value is 50 -->
-            <meta-data
-                android:name="pico.spatial.stage.immersion"
-                android:value="100" />
-
-            <!-- The minimum immersion of a Progressive Stage that the user can adjust to, only works when stage style is Progressive, range [0, 100], default value is 0 -->
-            <meta-data
-                android:name="pico.spatial.stage.immersion_min"
-                android:value="100" />
-
-            <!-- The maximum immersion of a Progressive Stage that the user can adjust to, only works when stage style is Progressive, range [0, 100], default value is 100 -->
-            <meta-data
-                android:name="pico.spatial.stage.immersion_max"
-                android:value="100" />
 
         </activity>
 

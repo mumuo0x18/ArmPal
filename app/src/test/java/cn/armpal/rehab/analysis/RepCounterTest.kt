@@ -10,15 +10,18 @@ class RepCounterTest {
 
     private fun counter(target: Float = 80f, holdMs: Long = 500L) = RepCounter(target, holdMs)
 
+    private fun feed(c: RepCounter, vararg frames: Pair<Float, Long>) {
+        frames.forEach { (deg, t) -> c.onFrame(deg, t) }
+    }
+
     @Test
     fun `达标序列 计数一次`() {
         val c = counter()
-        // 0 → 50(触发 RAISING)→ 85(进入 HOLD,t=400)→ 保持 500ms → 计数
         assertNull(c.onFrame(0f, 0))
         assertNull(c.onFrame(50f, 100))
-        assertNull(c.onFrame(80f, 200)) // 达到目标角 → 进入 HOLD,holdStart=200
+        assertNull(c.onFrame(80f, 200)) // 达到目标角 → HOLD
         assertNull(c.onFrame(85f, 400))
-        assertNull(c.onFrame(82f, 650)) // 保持 450ms,未够
+        assertNull(c.onFrame(82f, 650))
         val ev = c.onFrame(80f, 750)    // 保持 550ms ≥ 500ms → 完成
         assertNotNull(ev)
         assertEquals(1, c.count)
@@ -43,10 +46,10 @@ class RepCounterTest {
         val c = counter()
         c.onFrame(0f, 0)
         c.onFrame(50f, 100)
-        c.onFrame(80f, 200) // 进入 HOLD
-        c.onFrame(45f, 300) // 跌破 0.6×80=48 → 回 RAISING
+        c.onFrame(80f, 200) // HOLD
+        c.onFrame(45f, 300) // 跌破 0.6×80=48 → RAISING
         assertEquals(RepPhase.RAISING, c.phase)
-        assertNull(c.onFrame(80f, 500)) // 再次进入 HOLD
+        assertNull(c.onFrame(80f, 500))
         val ev = c.onFrame(82f, 1100)
         assertNotNull(ev)
         assertEquals(1, c.count)
@@ -55,18 +58,66 @@ class RepCounterTest {
     @Test
     fun `连续两次达标 计数两次`() {
         val c = counter()
-        // 第一次
         c.onFrame(0f, 0)
         c.onFrame(45f, 100)
         c.onFrame(80f, 200)
         c.onFrame(80f, 800)
-        // 第二次(放下再抬起)
+        // 第二次(必须放下到释放阈值以下再抬起)
         c.onFrame(10f, 1000)
         c.onFrame(45f, 1200)
         c.onFrame(80f, 1400)
         val ev = c.onFrame(81f, 2000)
         assertNotNull(ev)
         assertEquals(2, c.count)
+    }
+
+    /**
+     * P0-1 回归:顶点持续保持 3 秒只能算一次。
+     * 修复前(2026-11-14 评审)实测为 4 次。
+     */
+    @Test
+    fun `顶点持续保持三秒 只计一次`() {
+        val c = counter()
+        var t = 0L
+        c.onFrame(0f, t)
+        for (e in listOf(30f, 50f, 70f, 80f, 85f)) {
+            t += 100
+            c.onFrame(e, t)
+        }
+        repeat(30) {
+            t += 100
+            c.onFrame(85f, t) // 手臂一直在顶点,没有放下
+        }
+        assertEquals(1, c.count)
+    }
+
+    /** 计次后只放到 40°(高于释放阈值 20°)不算成功释放,不能再次计数。 */
+    @Test
+    fun `未回到释放阈值 不重复计数`() {
+        val c = counter()
+        var t = 0L
+        c.onFrame(0f, t)
+        for (e in listOf(45f, 80f, 85f)) {
+            t += 100
+            c.onFrame(e, t)
+        }
+        t += 900 // 完成第一次
+        c.onFrame(85f, t)
+        assertEquals(1, c.count)
+        assertEquals(RepPhase.LOWERING, c.phase)
+
+        // 只放到 45°,再抬回顶点保持 3 秒
+        t += 100
+        c.onFrame(45f, t)
+        for (e in listOf(60f, 80f, 85f)) {
+            t += 100
+            c.onFrame(e, t)
+        }
+        repeat(30) {
+            t += 100
+            c.onFrame(85f, t)
+        }
+        assertEquals(1, c.count)
     }
 
     @Test
@@ -77,6 +128,13 @@ class RepCounterTest {
         assertNull(c.onFrame(12f, 200))
         assertEquals(0, c.count)
         assertEquals(RepPhase.IDLE, c.phase)
+    }
+
+    @Test
+    fun `NaN 输入 不崩溃不计数`() {
+        val c = counter()
+        feed(c, Float.NaN to 0L, 85f to 100L)
+        assertEquals(0, c.count)
     }
 
     @Test

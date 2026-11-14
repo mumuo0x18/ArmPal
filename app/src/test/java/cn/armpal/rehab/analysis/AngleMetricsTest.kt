@@ -4,6 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * 抬举角语义:0° = 自然下垂,90° = 侧平举,180° = 过头(2026-11-14 评审 P0-2 统一后)。
+ */
 class AngleMetricsTest {
 
     private val frame = BodyFrame(
@@ -13,10 +16,10 @@ class AngleMetricsTest {
     )
 
     @Test
-    fun `手臂自然下垂 抬举角约180度`() {
+    fun `手臂自然下垂 抬举角约0度`() {
         val wrist = Vec3(0.18f, 0.4f, 0f) // 正下方
         val deg = AngleMetrics.elevationDeg(wrist, frame.shoulderR)
-        assertEquals(180f, deg, 1.5f)
+        assertEquals(0f, deg, 1.5f)
     }
 
     @Test
@@ -27,10 +30,23 @@ class AngleMetricsTest {
     }
 
     @Test
-    fun `过头 抬举角约0度`() {
+    fun `过头 抬举角约180度`() {
         val wrist = Vec3(0.18f, 2.0f, 0f) // 正上方
         val deg = AngleMetrics.elevationDeg(wrist, frame.shoulderR)
-        assertEquals(0f, deg, 1.5f)
+        assertEquals(180f, deg, 1.5f)
+    }
+
+    @Test
+    fun `目标80度 与处方目标语义一致`() {
+        val target = 80f
+        val rad = Math.toRadians(target.toDouble())
+        // 从肩出发、与"向下"轴夹角 80° 的腕点(臂长 0.6m)
+        val wrist = frame.shoulderR + Vec3(
+            (0.6 * Math.sin(rad)).toFloat(),
+            (-0.6 * Math.cos(rad)).toFloat(),
+            0f,
+        )
+        assertEquals(target, AngleMetrics.elevationDeg(wrist, frame.shoulderR), 0.5f)
     }
 
     @Test
@@ -42,8 +58,8 @@ class AngleMetricsTest {
 
     @Test
     fun `对称性 一侧高一侧低 有差值`() {
-        val rWrist = Vec3(0.78f, 1.4f, 0f)  // 90°
-        val lWrist = Vec3(-0.38f, 0.9f, 0f) // 更低
+        val rWrist = Vec3(0.78f, 1.4f, 0f)
+        val lWrist = Vec3(-0.38f, 0.9f, 0f)
         val diff = AngleMetrics.symmetryDeg(rWrist, lWrist, frame)
         assertTrue(diff > 20f)
     }

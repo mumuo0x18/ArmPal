@@ -1,5 +1,7 @@
 package cn.armpal.rehab.analysis
 
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -22,7 +24,20 @@ data class Vec3(val x: Float, val y: Float, val z: Float) {
 
     fun distance(o: Vec3): Float = (this - o).length
 
+    /**
+     * 绕世界 +Y 轴旋转(右手系,正角 = 向左转头)。
+     * 用于让"肩部偏移"跟随头显朝向旋转,而不是永远固定在 +X 方向。
+     */
+    fun rotateY(radians: Float): Vec3 {
+        val c = cos(radians)
+        val s = sin(radians)
+        return Vec3(x * c + z * s, y, -x * s + z * c)
+    }
+
     companion object {
         val UP = Vec3(0f, 1f, 0f)
+
+        /** 躯干"向下"轴:抬举角 0° 的参考方向。 */
+        val DOWN = Vec3(0f, -1f, 0f)
     }
 }
