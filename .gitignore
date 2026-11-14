@@ -41,3 +41,4 @@ node_modules/
 # ADB keys must never be committed
 adbkey
 adbkey.pub
+emu-last-feature-flags.protobuf

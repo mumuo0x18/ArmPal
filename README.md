@@ -184,7 +184,7 @@ pico-cli capture screenshot    # 截图验证
 | 2026-11-14 | **W2 追踪修正** | 权限授权后由巡检自动 `ensureStarted()`(无需重启应用);加入 `HMDTrackingProvider` 提供头显位置/yaw;`isSane()` 过滤 (0,0,0)/NaN;DataListener 不回调主线程的约束改为轮询 `latestData` |
 | 2026-11-14 | **W2 单测** | 31 个 JVM 单测全绿(含 P0 回归:顶点保持不重复计数、未释放不计数、校准不压缩角度量程、JSON 目录解析) |
 | (待) | 坐标转换 Spike C | Stage/头显参考系一致性随真机验证(模拟器腕坐标恒 0) |
-| (待) | 三窗摆放截图验收 | 模拟器未在本轮启动,`Placement.left/right` 的相对摆放需下一次 `pico-cli capture screenshot` 复核 |
+| 2026-11-14 | **W2 闭环端到端验收 ✅** | 模拟器实测:真实源启动(手+HMD SUPPORTED)→ 6s 无手数据自动切演示模式 → 三脚本 15s 轮换,计数器实测跑到 9/12 次(顶点 84° ≥ 目标 80°),侧窗实时角度仪表(67°/目标线 80°)+ 颜色反馈,报告窗同步进度;`Placement.left/right` 三窗摆放生效。证据:`docs/images/w2-closed-loop-demo.png` |
 
 ## Roadmap
 
