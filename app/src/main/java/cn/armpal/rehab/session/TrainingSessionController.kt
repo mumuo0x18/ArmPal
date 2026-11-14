@@ -302,6 +302,7 @@ object TrainingSessionController {
                 totalReps = totalReps,
                 sessionAvgQuality = sessionAvgQuality(),
                 sessionCompleted = sessionRecorded,
+                headWorld = frame.headWorld,
             )
         }
     }

@@ -9,9 +9,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import cn.armpal.rehab.analysis.ExerciseTemplate
+import cn.armpal.rehab.audio.SpatialVoiceGuide
+import cn.armpal.rehab.anchor.AnchorManager
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.data.TrainingRepository
 import cn.armpal.rehab.data.toEntity
+import cn.armpal.rehab.session.FeedbackLevel
 import cn.armpal.rehab.session.TrainingSessionController
 import cn.armpal.rehab.tracking.rememberTrackingSource
 import cn.armpal.rehab.windows.DisclaimerStore
@@ -57,7 +60,28 @@ fun HomeStage() {
                 }
             }
         }
+        // 语音引导 + 训练位锚点找回(均带降级,不阻断主流程)
+        SpatialVoiceGuide.init(context)
+        SpatialVoiceGuide.enabled = SettingsStore.voiceEnabled(context).first()
+        AnchorManager.restore(context)
     }
+
+    // 语音触发:完成提示(逐条)+ 反馈等级变化(限频;演示模式同样出声,路演需要)
+    LaunchedEffect(Unit) {
+        TrainingSessionController.state.collect { s ->
+            if (s.lastMessage.isNotEmpty()) {
+                SpatialVoiceGuide.speak(s.lastMessage, throttleMs = 2500L)
+            }
+            when (s.feedback) {
+                FeedbackLevel.TOO_LOW -> SpatialVoiceGuide.speak("抬得有点低,再抬高一点", throttleMs = 8000L)
+                FeedbackLevel.PARTIAL -> SpatialVoiceGuide.speak("快到了,再抬高一点", throttleMs = 8000L)
+                else -> Unit
+            }
+        }
+    }
+
+    // 3D 示范者(几何体人形;加载失败自动禁用)
+    DemoAvatar()
 
     var exercise by remember { mutableStateOf<ExerciseTemplate?>(null) }
     LaunchedEffect(Unit) {

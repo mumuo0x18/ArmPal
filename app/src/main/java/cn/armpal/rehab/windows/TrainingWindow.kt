@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cn.armpal.rehab.analysis.HeadMetrics
+import cn.armpal.rehab.anchor.AnchorManager
 import cn.armpal.rehab.content.ExerciseSelection
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.session.TrainingSessionController
@@ -151,6 +152,34 @@ fun TrainingWindow() {
             fontSize = 18.sp,
             color = if (state.demoMode) AccentAmber else TextSecondary,
         )
+
+        // —— 训练位锚点(行为设计:到点到位;状态 + 设置/找回,降级不阻断)——
+        Spacer(Modifier.height(14.dp))
+        val anchorState by AnchorManager.state.collectAsState()
+        val anchorText = when (val a = anchorState) {
+            is AnchorManager.AnchorState.Ready -> "训练位已就绪 ✅(连续打卡见报告窗)"
+            AnchorManager.AnchorState.NotFound -> "不在训练位?走过去 5 米内,或直接训练"
+            is AnchorManager.AnchorState.Failed -> "训练位不可用(${a.message.take(20)}),不影响训练"
+            AnchorManager.AnchorState.Working -> "训练位处理中…"
+            AnchorManager.AnchorState.Idle -> "还没设置训练位"
+        }
+        Text(text = anchorText, fontSize = 16.sp, color = TextSecondary)
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(
+                onClick = {
+                    val head = state.headWorld ?: cn.armpal.rehab.analysis.Vec3(0f, 1.2f, -0.3f)
+                    scope.launch {
+                        AnchorManager.createTrainingSpot(
+                            context,
+                            com.pico.spatial.core.math.Vector3(head.x, head.y, head.z),
+                        )
+                    }
+                },
+            ) {
+                Text(text = "这里设为训练位", fontSize = 16.sp)
+            }
+        }
     }
 }
 

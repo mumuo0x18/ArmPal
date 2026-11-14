@@ -1,5 +1,6 @@
 package cn.armpal.rehab.windows
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -8,16 +9,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cn.armpal.rehab.audio.SpatialVoiceGuide
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.data.TrainingRepository
 import cn.armpal.rehab.data.WeekAggregator
 import cn.armpal.rehab.session.TrainingSessionController
+import com.pico.spatial.ui.design.Button
 import com.pico.spatial.ui.design.Text
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 /**
@@ -28,7 +35,14 @@ import java.time.LocalDate
 fun ReportWindow() {
     val state by TrainingSessionController.state.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val recent by TrainingRepository.recent.collectAsState()
+
+    var voiceOn by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        voiceOn = SettingsStore.voiceEnabled(context).first()
+        SpatialVoiceGuide.enabled = voiceOn
+    }
 
     var weekly by remember { mutableStateOf<WeekAggregator.WeeklyReport?>(null) }
     var streak by remember { mutableStateOf(0) }
@@ -101,6 +115,19 @@ fun ReportWindow() {
         )
 
         Spacer(Modifier.height(16.dp))
+        // 语音提示开关(适老:声音是主反馈通道,可关)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = {
+                    voiceOn = !voiceOn
+                    SpatialVoiceGuide.enabled = voiceOn
+                    scope.launch { SettingsStore.setVoiceEnabled(context, voiceOn) }
+                },
+            ) {
+                Text(text = if (voiceOn) "语音提示:开" else "语音提示:关", fontSize = 18.sp)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
         Text(
             text = "训练数据在本机处理,不上传云端",
             fontSize = 17.sp,

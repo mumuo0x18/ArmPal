@@ -60,6 +60,10 @@ object SettingsStore {
     fun anchorId(context: Context): Flow<String?> =
         context.dataStore.data.map { it[Keys.ANCHOR_ID] }
 
+    /** 一次性读取锚点 id(单测/锚点管理器启动时用)。 */
+    suspend fun anchorIdOnce(context: Context): String? =
+        context.dataStore.data.first()[Keys.ANCHOR_ID]
+
     suspend fun setAnchorId(context: Context, id: String) {
         context.dataStore.edit { it[Keys.ANCHOR_ID] = id }
     }

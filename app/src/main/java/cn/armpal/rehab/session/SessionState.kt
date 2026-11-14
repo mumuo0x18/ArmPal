@@ -70,6 +70,8 @@ data class SessionState(
     val sessionAvgQuality: Float = -1f,
     /** 本场是否已完整结束(全部组数完成,已落库)。 */
     val sessionCompleted: Boolean = false,
+    /** 头显世界坐标(米,null = 无数据;训练位锚点创建用)。 */
+    val headWorld: cn.armpal.rehab.analysis.Vec3? = null,
 ) {
     /** 进度 0..1(按目标次数,当前组)。 */
     val progress: Float
