@@ -1,5 +1,6 @@
 package cn.armpal.rehab.windows
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cn.armpal.rehab.audio.SpatialVoiceGuide
+import cn.armpal.rehab.data.CardExporter
+import cn.armpal.rehab.data.DailyCardData
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.data.TrainingRepository
 import cn.armpal.rehab.data.WeekAggregator
@@ -116,7 +119,7 @@ fun ReportWindow() {
 
         Spacer(Modifier.height(16.dp))
         // 语音提示开关(适老:声音是主反馈通道,可关)
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Button(
                 onClick = {
                     voiceOn = !voiceOn
@@ -125,6 +128,36 @@ fun ReportWindow() {
                 },
             ) {
                 Text(text = if (voiceOn) "语音提示:开" else "语音提示:关", fontSize = 18.sp)
+            }
+            // 家属卡片:导出到相册 + 系统分享面板(微信等),用户主动触发
+            Button(
+                onClick = {
+                    scope.launch {
+                        val weekly = WeekAggregator.aggregate(
+                            TrainingRepository.sessionsSince(
+                                WeekAggregator.weekStartDate().toString(),
+                            ),
+                        )
+                        val todayReps = recent
+                            .filter { it.date == LocalDate.now().toString() && !it.demoMode }
+                            .sumOf { it.reps } + if (state.demoMode) 0 else state.totalReps
+                        val card = DailyCardData(
+                            totalReps = todayReps,
+                            maxElevationDeg = state.peakDeg.toInt()
+                                .coerceAtLeast(weekly.maxElevationDeg.toInt()),
+                            streakDays = weekly.streakDays,
+                            activeDaysThisWeek = weekly.activeDays,
+                            demoSessions = recent.count {
+                                it.date == LocalDate.now().toString() && it.demoMode
+                            },
+                        )
+                        CardExporter.export(context, card)?.let { uri ->
+                            CardExporter.share(context, uri)
+                        }
+                    }
+                },
+            ) {
+                Text(text = "生成家属卡片", fontSize = 18.sp)
             }
         }
         Spacer(Modifier.height(10.dp))
