@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "exercises": [
+    {
+      "id": "seated_arm_raise",
+      "name": "坐姿抬臂",
+      "targetJoint": "WRIST_R",
+      "targetElevationDeg": 80.0,
+      "reps": 12,
+      "holdMs": 500,
+      "sets": 2,
+      "restSec": 30,
+      "templateTrajectory": [
+        [0.00, -0.30, 0.00],
+        [0.15, -0.20, 0.00],
+        [0.35, 0.00, 0.00],
+        [0.50, 0.10, 0.00],
+        [0.55, 0.12, 0.00]
+      ],
+      "description": "坐直,右臂从身体侧方缓慢抬起至约80度,顶点保持半秒后放下。双侧交替时以健侧为参考。"
+    }
+  ]
+}
