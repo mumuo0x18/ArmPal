@@ -80,8 +80,8 @@ fun HomeStage() {
         }
     }
 
-    // 3D 示范者(几何体人形;加载失败自动禁用)
-    DemoAvatar()
+
+
 
     var exercise by remember { mutableStateOf<ExerciseTemplate?>(null) }
     LaunchedEffect(Unit) {

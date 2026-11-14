@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cn.armpal.rehab.analysis.HeadMetrics
 import cn.armpal.rehab.anchor.AnchorManager
+import cn.armpal.rehab.content.DemoAvatarInline
 import cn.armpal.rehab.content.ExerciseSelection
 import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.session.TrainingSessionController
@@ -141,7 +142,13 @@ fun TrainingWindow() {
             fontSize = 18.sp,
             color = AccentBlue,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
+
+        // 3D 示范者(窗口内嵌 SpatialView;臂部动作时跟随实时抬举角摆臂)
+        if (!neck) {
+            DemoAvatarInline()
+            Spacer(Modifier.height(12.dp))
+        }
 
         if (state.targetReached) {
             Text(text = "今日目标已完成 🎉", fontSize = 24.sp, color = AccentGreen)

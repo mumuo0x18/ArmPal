@@ -25,6 +25,9 @@ import kotlin.math.sin
 private const val UPPER_LEN = 0.24f
 private const val FORE_LEN = 0.22f
 
+/** 视口内整体缩放(调优参数:坐标系量级待实测,先 0.6 防出界)。 */
+private const val K = 0.15f
+
 /**
  * 3D 示范者(PRD:真人比例示范):
  * - MeshResource.createBox 单位立方 × 6 段拼装的几何体人形(头/躯干/双侧上臂+前臂),坐姿比例
@@ -36,32 +39,33 @@ private const val FORE_LEN = 0.22f
  * - 装配失败静默禁用(语音/文案/仪表仍是完整反馈通道)
  */
 @Composable
-fun DemoAvatar() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        com.pico.spatial.ui.foundation.content.SpatialView(
-            modifier = Modifier
-                .width(560.dp)
-                .height(420.dp),
-        ) { content, _ ->
-            val rig = runCatching { AvatarParts.load(Vector3(0f, -0.34f, 0f)) { content.addEntity(it) } }
-                .onFailure { android.util.Log.w("DemoAvatar", "load failed, avatar disabled", it) }
-                .getOrNull() ?: return@SpatialView
+fun DemoAvatarInline(
+    width: androidx.compose.ui.unit.Dp = 460.dp,
+    height: androidx.compose.ui.unit.Dp = 330.dp,
+) {
+    com.pico.spatial.ui.foundation.content.SpatialView(
+        modifier = Modifier
+            .width(width)
+            .height(height),
+    ) { content, _ ->
+        val rig = runCatching { AvatarParts.load(Vector3(0f, -0.06f, 0f)) { content.addEntity(it) } }
+            .onFailure { android.util.Log.w("DemoAvatar", "load failed, avatar disabled", it) }
+            .getOrNull() ?: return@SpatialView
 
-            try {
-                var eR = 5f
-                var eL = 5f
-                while (true) {
-                    val state = TrainingSessionController.current
-                    val targetR = state.elevationR ?: 5f
-                    val targetL = state.elevationL ?: 5f
-                    eR += (targetR - eR) * 0.12f
-                    eL += (targetL - eL) * 0.12f
-                    rig.setArms(eR, eL)
-                    delay(33)
-                }
-            } finally {
-                rig.destroy()
+        try {
+            var eR = 5f
+            var eL = 5f
+            while (true) {
+                val state = TrainingSessionController.current
+                val targetR = state.elevationR ?: 5f
+                val targetL = state.elevationL ?: 5f
+                eR += (targetR - eR) * 0.12f
+                eL += (targetL - eL) * 0.12f
+                rig.setArms(eR, eL)
+                delay(33)
             }
+        } finally {
+            rig.destroy()
         }
     }
 }
@@ -93,15 +97,15 @@ private class AvatarParts(
         val s = arm.shoulder
         setTransform(
             arm.upper,
-            Vector3(s.x + dx * UPPER_LEN / 2f, s.y + dy * UPPER_LEN / 2f, s.z),
+            Vector3(s.x + dx * UPPER_LEN * K / 2f, s.y + dy * UPPER_LEN * K / 2f, s.z),
             quatZ(rad * arm.sideSign),
-            Vector3(0.08f, UPPER_LEN, 0.08f),
+            Vector3(0.08f * K, UPPER_LEN * K, 0.08f * K),
         )
         setTransform(
             arm.fore,
-            Vector3(s.x + dx * (UPPER_LEN + FORE_LEN / 2f), s.y + dy * (UPPER_LEN + FORE_LEN / 2f), s.z),
+            Vector3(s.x + dx * (UPPER_LEN * K + FORE_LEN * K / 2f), s.y + dy * (UPPER_LEN * K + FORE_LEN * K / 2f), s.z),
             quatZ(rad * arm.sideSign),
-            Vector3(0.07f, FORE_LEN, 0.07f),
+            Vector3(0.07f * K, FORE_LEN * K, 0.07f * K),
         )
     }
 
@@ -133,34 +137,41 @@ private class AvatarParts(
                 e.components[ModelComponent::class.java] = ModelComponent(mesh, material)
                 e.components[TransformComponent::class.java] =
                     TransformComponent(
-                        Vector3(origin.x + position.x, origin.y + position.y, origin.z + position.z),
+                        Vector3(
+                            origin.x + position.x * K,
+                            origin.y + position.y * K,
+                            origin.z + position.z * K,
+                        ),
                         EulerAngles(0f, 0f, 0f),
-                        scale,
+                        scale * K,
                     )
                 register(e)
                 return e
             }
 
+            // 诊断立方:视图原点处一个明显可见的小块(若它都不渲染,问题在注册而非摆放)
+            part(Vector3(0f, 0.9f, 0f), Vector3(0.18f, 0.18f, 0.18f))
+
             val torso = part(Vector3(0f, 0.22f, 0f), Vector3(0.30f, 0.44f, 0.16f))
             val head = part(Vector3(0f, 0.56f, 0f), Vector3(0.20f, 0.20f, 0.20f))
 
             fun arm(sideSign: Float): ArmSegments {
-                val shoulder = Vector3(sideSign * 0.19f, 0.40f, 0f)
+                val shoulder = Vector3(sideSign * 0.19f * K, 0.40f * K, 0f)
                 val upper = part(
                     Vector3(
-                        shoulder.x + sideSign * sin(0.1f) * UPPER_LEN / 2f,
-                        shoulder.y - cos(0.1f) * UPPER_LEN / 2f,
+                        shoulder.x + sideSign * sin(0.1f) * UPPER_LEN * K / 2f,
+                        shoulder.y - cos(0.1f) * UPPER_LEN * K / 2f,
                         shoulder.z,
                     ),
-                    Vector3(0.08f, UPPER_LEN, 0.08f),
+                    Vector3(0.08f * K, UPPER_LEN * K, 0.08f * K),
                 )
                 val fore = part(
                     Vector3(
-                        shoulder.x + sideSign * sin(0.1f) * (UPPER_LEN + FORE_LEN / 2f),
-                        shoulder.y - cos(0.1f) * (UPPER_LEN + FORE_LEN / 2f),
+                        shoulder.x + sideSign * sin(0.1f) * (UPPER_LEN * K + FORE_LEN * K / 2f),
+                        shoulder.y - cos(0.1f) * (UPPER_LEN * K + FORE_LEN * K / 2f),
                         shoulder.z,
                     ),
-                    Vector3(0.07f, FORE_LEN, 0.07f),
+                    Vector3(0.07f * K, FORE_LEN * K, 0.07f * K),
                 )
                 return ArmSegments(upper, fore, shoulder, sideSign)
             }
