@@ -46,17 +46,19 @@ fun HomeStage() {
     // 免责声明:首次启动必须确认(PRD §5)。状态放 DisclaimerStore(训练窗渲染 gate,这里决定开窗策略)
     LaunchedEffect(Unit) {
         DisclaimerStore.accepted = SettingsStore.disclaimerAccepted(context).first()
-        // 会话落库钩子(data 层实现;演示数据不计 streak)
+        // 会话落库钩子:演示数据不落库(防 DB 膨胀/污染统计),真实数据落库 + 推进 streak
         TrainingSessionController.sessionSink = { record ->
-            TrainingRepository.record(record.toEntity())
-            if (!record.demoMode && record.reps > 0) {
-                ioScope.launch {
-                    val today = java.time.LocalDate.now()
-                    SettingsStore.bumpStreak(
-                        context,
-                        today.toString(),
-                        today.minusDays(1).toString(),
-                    )
+            if (!record.demoMode) {
+                TrainingRepository.record(record.toEntity())
+                if (record.reps > 0) {
+                    ioScope.launch {
+                        val today = java.time.LocalDate.now()
+                        SettingsStore.bumpStreak(
+                            context,
+                            today.toString(),
+                            today.minusDays(1).toString(),
+                        )
+                    }
                 }
             }
         }

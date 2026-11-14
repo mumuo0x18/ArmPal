@@ -58,6 +58,7 @@ object TrainingSessionController {
     private var lastRestTickMs = 0L
     private var totalReps = 0
     private var sessionRecorded = false
+    private var demoSessionsToday = 0
     private var maxElevation = 0f
     private var qualitySamples = mutableListOf<Float>()
     private var symmetrySamples = mutableListOf<Float>()
@@ -303,6 +304,8 @@ object TrainingSessionController {
                 sessionAvgQuality = sessionAvgQuality(),
                 sessionCompleted = sessionRecorded,
                 headWorld = frame.headWorld,
+                headSwingDeg = if (isNeck) targetSide else null,
+                demoSessionsToday = demoSessionsToday,
             )
         }
     }
@@ -353,6 +356,7 @@ object TrainingSessionController {
             createdAtMs = System.currentTimeMillis(),
         )
         _state.update { it.copy(sessionCompleted = true) }
+        if (record.demoMode) demoSessionsToday++ // 演示数据不落库,仅内存计数
         sessionSink?.invoke(record)
         Log.i(TAG, "session completed: reps=${record.reps} quality=${record.avgQuality}")
     }
@@ -379,6 +383,7 @@ object TrainingSessionController {
             createdAtMs = System.currentTimeMillis(),
         )
         sessionSink?.invoke(record)
+        if (record.demoMode) demoSessionsToday++ // 演示数据不落库,仅内存计数
         Log.i(TAG, "session flushed ($reason): reps=${record.reps}")
     }
 

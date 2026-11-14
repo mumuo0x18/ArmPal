@@ -59,6 +59,7 @@ fun ReportWindow() {
     val today = LocalDate.now().toString()
     val todaySessions = remember(recent) { recent.filter { it.date == today } }
     val todayPersistedReps = todaySessions.filter { !it.demoMode }.sumOf { it.reps }
+    val demoCount = state.demoSessionsToday
 
     RehabPanel(title = "今日报告") {
         // —— 本场实时 ——
@@ -104,12 +105,11 @@ fun ReportWindow() {
             color = TextPrimary,
         )
         Spacer(Modifier.height(6.dp))
-        val demoCount = todaySessions.count { it.demoMode }
-        val realCount = todaySessions.size - demoCount
+        val realCount = todaySessions.size
         Text(
             text = when {
-                todaySessions.isEmpty() -> "今天还没有训练记录"
-                realCount == 0 -> "今天有 ${demoCount} 场演示训练(不计入统计)"
+                todayPersistedReps == 0 && demoCount == 0 -> "今天还没有训练记录"
+                realCount == 0 && demoCount > 0 -> "今天有 ${demoCount} 场演示训练(不计入统计)"
                 demoCount > 0 -> "今天已记录 $todayPersistedReps 次(${realCount} 场,另有 ${demoCount} 场演示)"
                 else -> "今天已记录 $todayPersistedReps 次(${realCount} 场训练)"
             },

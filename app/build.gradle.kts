@@ -28,6 +28,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 参赛包用 debug 签名保证可安装(发布渠道为赛事评审,非商店)
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

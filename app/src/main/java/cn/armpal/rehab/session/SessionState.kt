@@ -72,6 +72,10 @@ data class SessionState(
     val sessionCompleted: Boolean = false,
     /** 头显世界坐标(米,null = 无数据;训练位锚点创建用)。 */
     val headWorld: cn.armpal.rehab.analysis.Vec3? = null,
+    /** 颈部动作的活动幅度(度,null = 非颈部动作或无数据)。 */
+    val headSwingDeg: Float? = null,
+    /** 今日已完成的演示会话数(演示数据不落库,仅内存计数)。 */
+    val demoSessionsToday: Int = 0,
 ) {
     /** 进度 0..1(按目标次数,当前组)。 */
     val progress: Float

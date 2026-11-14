@@ -27,18 +27,24 @@ import kotlin.math.abs
 @Composable
 fun CorrectWindow() {
     val state by TrainingSessionController.state.collectAsState()
+    val isNeck = state.exercise?.targetJoint
+        ?.let { cn.armpal.rehab.analysis.HeadMetrics.isNeckExercise(it) } == true
     RehabPanel(title = "动作纠正") {
         val eR = state.elevationR
         val eL = state.elevationL
+        // 颈部动作:显示头部活动幅度;臂部动作:显示右臂抬举角
+        val primaryDeg: Float? = if (isNeck) state.headSwingDeg else state.elevationR
+        val primaryLabel = if (isNeck) "活动幅度(目标 ${state.targetDeg.toInt()}°)"
+        else "右臂抬举(目标 ${state.targetDeg.toInt()}°)"
 
         Text(
-            text = if (eR != null) "${eR.toInt()}°" else "--°",
+            text = if (primaryDeg != null) "${primaryDeg.toInt()}°" else "--°",
             fontSize = 64.sp,
             color = feedbackColor(state.feedback),
         )
-        Text(text = "右臂抬举(目标 ${state.targetDeg.toInt()}°)", fontSize = 20.sp, color = TextSecondary)
+        Text(text = primaryLabel, fontSize = 20.sp, color = TextSecondary)
         Spacer(Modifier.height(14.dp))
-        AngleGauge(elevationDeg = eR, targetDeg = state.targetDeg)
+        AngleGauge(elevationDeg = primaryDeg, targetDeg = state.targetDeg)
         Spacer(Modifier.height(10.dp))
         Text(
             text = "目标线 ${state.targetDeg.toInt()}° · 保持中角标",
@@ -55,18 +61,26 @@ fun CorrectWindow() {
         Spacer(Modifier.height(18.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "左臂 ${eL?.toInt()?.toString() ?: "--"}°",
-                fontSize = 22.sp,
-                color = AccentBlue,
-            )
-            Spacer(Modifier.width(18.dp))
-            val symmetry = if (eR != null && eL != null) abs(eR - eL) else null
-            Text(
-                text = if (symmetry != null) "左右差 ${symmetry.toInt()}°" else "左右差 --",
-                fontSize = 22.sp,
-                color = if (symmetry != null && symmetry > 25f) AccentAmber else TextSecondary,
-            )
+            if (isNeck) {
+                Text(
+                    text = "缓慢转到位,停一拍再回正",
+                    fontSize = 22.sp,
+                    color = AccentBlue,
+                )
+            } else {
+                Text(
+                    text = "左臂 ${eL?.toInt()?.toString() ?: "--"}°",
+                    fontSize = 22.sp,
+                    color = AccentBlue,
+                )
+                Spacer(Modifier.width(18.dp))
+                val symmetry = if (eR != null && eL != null) abs(eR - eL) else null
+                Text(
+                    text = if (symmetry != null) "左右差 ${symmetry.toInt()}°" else "左右差 --",
+                    fontSize = 22.sp,
+                    color = if (symmetry != null && symmetry > 25f) AccentAmber else TextSecondary,
+                )
+            }
         }
         Spacer(Modifier.height(22.dp))
 
