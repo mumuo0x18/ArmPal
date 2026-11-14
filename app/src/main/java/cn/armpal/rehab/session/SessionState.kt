@@ -60,8 +60,18 @@ data class SessionState(
     val sessionStartedAtMs: Long = 0L,
     /** 最近一次完成提示。 */
     val lastMessage: String = "",
+    /** 组间休息剩余秒数(0 = 不在休息)。 */
+    val restingSecLeft: Int = 0,
+    /** 休息总时长(秒,用于倒计时进度)。 */
+    val restingTotalSec: Int = 0,
+    /** 全场累计完成次数(跨组)。 */
+    val totalReps: Int = 0,
+    /** 本场累计平均动作质量 0..1(-1 = 未评分)。 */
+    val sessionAvgQuality: Float = -1f,
+    /** 本场是否已完整结束(全部组数完成,已落库)。 */
+    val sessionCompleted: Boolean = false,
 ) {
-    /** 进度 0..1(按目标次数)。 */
+    /** 进度 0..1(按目标次数,当前组)。 */
     val progress: Float
         get() = if (targetReps <= 0) 0f else (repsDone.toFloat() / targetReps).coerceIn(0f, 1f)
 

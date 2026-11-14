@@ -12,20 +12,39 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cn.armpal.rehab.data.SettingsStore
 import cn.armpal.rehab.session.TrainingSessionController
 import com.pico.spatial.ui.design.Text
+import kotlinx.coroutines.launch
 
 /**
  * 训练主窗:动作名、目标、次数进度、实时反馈、追踪状态。
+ * 首次启动先渲染免责声明 gate(确认后才显示训练内容,HomeStage 据此决定开其余两窗)。
  * 数据全部来自单一状态中枢 [TrainingSessionController](三窗共享)。
  */
 @Composable
 fun TrainingWindow() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // 免责声明 gate:确认前占满训练主窗(合规红线,PRD §5)
+    if (DisclaimerStore.accepted == false) {
+        DisclaimerGate(
+            onAccept = {
+                DisclaimerStore.accepted = true
+                scope.launch { SettingsStore.setDisclaimerAccepted(context, true) }
+            },
+        )
+        return
+    }
+
     val state by TrainingSessionController.state.collectAsState()
     RehabPanel(title = "臂伴 · 今日训练") {
         Text(
@@ -40,6 +59,27 @@ fun TrainingWindow() {
             color = TextSecondary,
         )
         Spacer(Modifier.height(18.dp))
+
+        if (state.restingSecLeft > 0) {
+            // 组间休息倒计时
+            val restProgress = if (state.restingTotalSec > 0) {
+                state.restingSecLeft.toFloat() / state.restingTotalSec
+            } else 0f
+            Text(
+                text = "第 ${state.setIndex + 1} 组完成 🎉",
+                fontSize = 28.sp,
+                color = AccentGreen,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "休息 ${state.restingSecLeft} 秒,下一组马上开始",
+                fontSize = 40.sp,
+                color = AccentAmber,
+            )
+            Spacer(Modifier.height(10.dp))
+            ProgressBar(progress = restProgress)
+            Spacer(Modifier.height(18.dp))
+        }
 
         Row(verticalAlignment = Alignment.Bottom) {
             Text(

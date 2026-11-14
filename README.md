@@ -183,8 +183,12 @@ pico-cli capture screenshot    # 截图验证
 | 2026-11-14 | **W2 算法修正** | 抬举角统一为"0°=垂下/180°=过头";RepCounter 增加释放阈值(顶点保持 3s 由 4 次修正为 1 次,回归用例锁定);T-pose 校准不再把腕距当肩宽(肩宽用解剖学先验 + 臂长反推) |
 | 2026-11-14 | **W2 追踪修正** | 权限授权后由巡检自动 `ensureStarted()`(无需重启应用);加入 `HMDTrackingProvider` 提供头显位置/yaw;`isSane()` 过滤 (0,0,0)/NaN;DataListener 不回调主线程的约束改为轮询 `latestData` |
 | 2026-11-14 | **W2 单测** | 31 个 JVM 单测全绿(含 P0 回归:顶点保持不重复计数、未释放不计数、校准不压缩角度量程、JSON 目录解析) |
-| (待) | 坐标转换 Spike C | Stage/头显参考系一致性随真机验证(模拟器腕坐标恒 0) |
 | 2026-11-14 | **W2 闭环端到端验收 ✅** | 模拟器实测:真实源启动(手+HMD SUPPORTED)→ 6s 无手数据自动切演示模式 → 三脚本 15s 轮换,计数器实测跑到 9/12 次(顶点 84° ≥ 目标 80°),侧窗实时角度仪表(67°/目标线 80°)+ 颜色反馈,报告窗同步进度;`Placement.left/right` 三窗摆放生效。证据:`docs/images/w2-closed-loop-demo.png` |
+| 2026-11-14 | W2.5 依赖 | Room 2.8.5 + KSP(2.1.20-1.0.32;KSP2 2.0.1 与 AGP 8.13.2 的 javaPreCompile NPE 不兼容)+ DataStore 1.1.7;`repo.maven.apache.org`/`maven.aliyun.com` 直连 TLS 均被断 → Gradle 走本机代理(~/.gradle/gradle.properties)+ 阿里云镜像兜底 |
+| 2026-11-14 | **W2.5 落库端到端 ✅** | Room 持久化链路实测:演示会话完整跑完(24 次 = 12×2 组)→ `session completed` 落库 → 报告窗显示"1 场训练";组间休息 30s 自动推进到第 2 组;**force-stop 重启后历史仍在、免责声明不再弹**(DataStore) |
+| 2026-11-14 | W2.5 合规 | 首次启动免责声明 gate:确认前只开训练主窗渲染"使用须知",确认后才开三窗。踩坑:① Stage 内容层不渲染纯 Compose 覆盖(gate 放进训练窗);② `remember(true)` 初始值导致开窗竞态(改 null 三态);③ 未确认时 bind 也别启动(演示源会提前计数) |
+| 2026-11-14 | W2.5 动作质量 | DTW 质量分接入会话链路(`RepQualityScorer`):每次 RepCompleted 对腕轨迹 vs 模板打分,模板语义 = 肩相对偏移(与 exercises.json 一致);报告窗显示本场平均分 |
+| 2026-11-14 | **30 分钟 soak ✅** | 模拟器连续 30 分钟演示模式全速跑:pid 全程存活、crash buffer 0 条(准入红线达标; soak 期间勿 install/install 会杀进程导致 soak 无效——第一次就栽在这) |
 
 ## Roadmap
 
